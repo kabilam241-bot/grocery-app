@@ -38,15 +38,27 @@
         let products = JSON.parse(localStorage.getItem('my_products')) || [];
         renderProducts();
 
-        // ক্যামেরা অন করা ও স্ক্যান করা
+        // ক্যামেরা অন করা ও স্ক্যান করা (ডিফল্ট ব্যাক ক্যামেরা সেট করা)
         function onScanSuccess(decodedText) {
             scannedBarcode = decodedText;
             document.getElementById('scanned-code').innerText = scannedBarcode;
             document.getElementById('product-form').style.display = 'block';
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess);
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: 250,
+                facingMode: { exact: "environment" } // ব্যাক ক্যামেরা নিশ্চিত করার জন্য
+            }
+        );
+        
+        // ব্যাক ক্যামেরা কাজ না করলে নরমাল স্ক্যানার ব্যাকআপ
+        html5QrcodeScanner.render(onScanSuccess).catch(err => {
+            let fallbackScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+            fallbackScanner.render(onScanSuccess);
+        });
 
         // প্রোডাক্ট সেভ করা
         function saveProduct() {
