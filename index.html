@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>দোকানের ইনভেন্টরি ও বারকোড স্ক্যানার</title>
+    <!-- বারকোড স্ক্যান করার লাইব্রেরি -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 15px; background-color: #f4f4f9; margin: 0; }
+        #reader { width: 100%; max-width: 350px; margin: 0 auto; border-radius: 8px; overflow: hidden; }
+        .product-card { background: white; padding: 15px; margin: 10px auto; max-width: 350px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: left; }
+        input, button { padding: 12px; margin: 6px 0; width: 100%; box-sizing: border-box; font-size: 16px; }
+        button { background-color: #28a745; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h2>দোকানের প্রোডাক্ট স্ক্যানার</h2>
+
+    <!-- ক্যামেরা দেখানোর জায়গা -->
+    <div id="reader"></div>
+
+    <!-- বারকোড স্ক্যান হলে তথ্য দেওয়ার ঘর -->
+    <div id="product-form" style="display:none;" class="product-card">
+        <h3>নতুন প্রোডাক্ট যুক্ত করুন</h3>
+        <p>বারকোড: <b id="scanned-code"></b></p>
+        <input type="text" id="prod-name" placeholder="প্রোডাক্টের নাম">
+        <input type="number" id="prod-price" placeholder="দাম (AED)">
+        <button onclick="saveProduct()">সেভ করুন</button>
+    </div>
+
+    <h3>সেভ করা প্রোডাক্ট</h3>
+    <div id="product-list"></div>
+
+    <script>
+        let scannedBarcode = "";
+        let products = JSON.parse(localStorage.getItem('my_products')) || [];
+        renderProducts();
+
+        // ক্যামেরা অন করা ও স্ক্যান করা
+        function onScanSuccess(decodedText) {
+            scannedBarcode = decodedText;
+            document.getElementById('scanned-code').innerText = scannedBarcode;
+            document.getElementById('product-form').style.display = 'block';
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+
+        // প্রোডাক্ট সেভ করা
+        function saveProduct() {
+            let name = document.getElementById('prod-name').value;
+            let price = document.getElementById('prod-price').value;
+
+            if(!name || !price) {
+                alert("নাম এবং দাম দুটোই লিখুন!");
+                return;
+            }
+
+            let item = { barcode: scannedBarcode, name: name, price: price };
+            products.push(item);
+            
+            // মোবাইলের মেমরিতে সেভ রাখা
+            localStorage.setItem('my_products', JSON.stringify(products));
+
+            renderProducts();
+            
+            // ঘর খালি করা
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('product-form').style.display = 'none';
+        }
+
+        function renderProducts() {
+            let listDiv = document.getElementById('product-list');
+            listDiv.innerHTML = '';
+            products.forEach(p => {
+                listDiv.innerHTML += `
+                    <div class="product-card">
+                        <b>${p.name}</b><br>
+                        বারকোড: ${p.barcode}<br>
+                        দাম: <b>${p.price} AED</b>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
